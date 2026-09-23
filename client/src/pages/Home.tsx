@@ -14,6 +14,7 @@ import {
   CircleHelp,
   Clock3,
   Heart,
+  Eye,
   LocateFixed,
   ListFilter,
   MapPin,
@@ -50,6 +51,9 @@ type Product = {
   badge?: string;
   tone: string;
   brand?: string;
+  description?: string;
+  specifications?: Array<{ label: string; value: string }>;
+  gallery?: string[];
 };
 
 const productCatalog: Product[] = [
@@ -770,6 +774,95 @@ const categories = [
   { label: "Sports", icon: "↗", color: "#e6eef1" },
 ];
 
+const categoryGallery: Record<string, string[]> = {
+  Mobiles: [
+    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1592286927505-2fd0e9e3b1c9?auto=format&fit=crop&w=1000&q=85",
+  ],
+  Electronics: [
+    "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1000&q=85",
+  ],
+  Fashion: [
+    "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=1000&q=85",
+  ],
+  Beauty: [
+    "https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=1000&q=85",
+  ],
+  "Home & Living": [
+    "https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&w=1000&q=85",
+  ],
+  Grocery: [
+    "https://images.unsplash.com/photo-1601598851547-4302969d4b84?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?auto=format&fit=crop&w=1000&q=85",
+  ],
+  Kids: [
+    "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=1000&q=85",
+  ],
+  Sports: [
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1000&q=85",
+    "https://images.unsplash.com/photo-1592432678016-e910b452f9a2?auto=format&fit=crop&w=1000&q=85",
+  ],
+};
+
+const getProductDetails = (product: Product) => {
+  const categorySpecs: Record<string, Array<{ label: string; value: string }>> = {
+    Mobiles: [
+      { label: "Network", value: "5G ready · Dual SIM" },
+      { label: "Display", value: "AMOLED · 120Hz" },
+      { label: "Warranty", value: "1 year official warranty" },
+    ],
+    Electronics: [
+      { label: "Use case", value: "Work, study & everyday productivity" },
+      { label: "Condition", value: "Brand new · sealed pack" },
+      { label: "Warranty", value: "1 year seller warranty" },
+    ],
+    Fashion: [
+      { label: "Material", value: "Premium blended fabric" },
+      { label: "Fit", value: "Comfort fit · true to size" },
+      { label: "Care", value: "Machine wash cold" },
+    ],
+    Beauty: [
+      { label: "Skin type", value: "Suitable for everyday use" },
+      { label: "Formula", value: "Dermatologically tested" },
+      { label: "Origin", value: "Authentic, sealed product" },
+    ],
+    "Home & Living": [
+      { label: "Material", value: "Durable everyday construction" },
+      { label: "Use", value: "Made for Nepali homes" },
+      { label: "Support", value: "Seller support included" },
+    ],
+    Grocery: [
+      { label: "Quality", value: "Freshly packed" },
+      { label: "Storage", value: "Store in a cool, dry place" },
+      { label: "Sourcing", value: "Trusted Nepal sellers" },
+    ],
+    Kids: [
+      { label: "Age guide", value: "Designed for growing kids" },
+      { label: "Safety", value: "Child-friendly materials" },
+      { label: "Use", value: "Play, learn & explore" },
+    ],
+    Sports: [
+      { label: "Activity", value: "Training, travel & weekend play" },
+      { label: "Build", value: "Comfortable, durable finish" },
+      { label: "Fit guide", value: "Check seller size notes" },
+    ],
+  };
+  return {
+    description: `${product.name} is a carefully selected ${product.category.toLowerCase()} find from ${product.seller}. Enjoy dependable quality, clear delivery updates and buyer protection on every xitosam order.`,
+    specifications: [
+      { label: "Brand", value: product.brand ?? product.seller.split(" ")[0] },
+      ...(categorySpecs[product.category] ?? []),
+      { label: "Delivery", value: product.delivery },
+    ],
+    gallery: [product.image, ...(categoryGallery[product.category] ?? [])].filter((image, index, images) => images.indexOf(image) === index).slice(0, 3),
+  };
+};
+
 const formatNpr = (value: number) => `NPR ${value.toLocaleString("en-IN")}`;
 const phonePattern = /^9[678]\d{8}$/;
 const copy = {
@@ -836,6 +929,11 @@ const copy = {
 export default function Home() {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<"details" | "processing" | "success">("details");
+  const [paymentMethod, setPaymentMethod] = useState<"esewa" | "khalti" | "card" | "cod">("esewa");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -887,9 +985,11 @@ export default function Home() {
   const brands = useMemo(() => ["All brands", ...Array.from(new Set(products.map(product => product.brand ?? product.seller.split(" ")[0])))], [products]);
   const filteredProducts = useMemo(() => {
     const categoryProducts = selectedCategory === "All" ? products : products.filter(product => product.category === selectedCategory);
+    const normalizedSearch = searchQuery.trim().toLowerCase();
     const filtered = categoryProducts.filter(product => {
       const brand = product.brand ?? product.seller.split(" ")[0];
-      return product.price >= minPrice && product.price <= maxPrice && (selectedBrand === "All brands" || brand === selectedBrand);
+      const searchableText = [product.name, product.category, brand, product.seller, product.city].join(" ").toLowerCase();
+      return (!normalizedSearch || searchableText.includes(normalizedSearch)) && product.price >= minPrice && product.price <= maxPrice && (selectedBrand === "All brands" || brand === selectedBrand);
     });
     return [...filtered].sort((a, b) => {
       if (sortBy === "price-low") return a.price - b.price;
@@ -897,7 +997,7 @@ export default function Home() {
       if (sortBy === "rating") return b.rating - a.rating;
       return 0;
     });
-  }, [products, selectedCategory, minPrice, maxPrice, selectedBrand, sortBy]);
+  }, [products, selectedCategory, searchQuery, minPrice, maxPrice, selectedBrand, sortBy]);
   const cartItems = products.filter(product => cart[product.id]);
   const cartCount = Object.values(cart).reduce((sum, value) => sum + value, 0);
   const cartTotal = cartItems.reduce((sum, product) => sum + product.price * (cart[product.id] ?? 0), 0);
@@ -905,6 +1005,27 @@ export default function Home() {
   const addToCart = (product: Product) => {
     setCart(current => ({ ...current, [product.id]: (current[product.id] ?? 0) + 1 }));
     toast.success(`${product.name.split(" — ")[0]} added to your bag`, { description: "Ready when you are." });
+  };
+  const updateCartQuantity = (product: Product, quantity: number) => {
+    setCart(current => {
+      const next = { ...current };
+      if (quantity <= 0) delete next[product.id];
+      else next[product.id] = quantity;
+      return next;
+    });
+  };
+  const openCheckout = () => {
+    if (!cartItems.length) {
+      toast.error("Your bag is empty", { description: "Add a product before checkout." });
+      return;
+    }
+    setCartOpen(false);
+    setCheckoutStep("details");
+    setCheckoutOpen(true);
+  };
+  const simulatePayment = () => {
+    setCheckoutStep("processing");
+    window.setTimeout(() => setCheckoutStep("success"), 900);
   };
   const toggleFavorite = (product: Product) => {
     setFavorites(current => current.includes(product.id) ? current.filter(id => id !== product.id) : [...current, product.id]);
@@ -964,7 +1085,7 @@ export default function Home() {
 
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#86958c]" />
-            <input className="h-11 w-full rounded-2xl border border-[#eaded7] bg-white pl-11 pr-4 text-sm font-medium outline-none transition focus:border-[#f59a44] focus:ring-4 focus:ring-[#f59a44]/10" placeholder={t.search} onKeyDown={event => event.key === "Enter" && toast.info("Search is ready to connect to your full catalog.")} />
+            <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="h-11 w-full rounded-2xl border border-[#eaded7] bg-white pl-11 pr-10 text-sm font-medium outline-none transition focus:border-[#f59a44] focus:ring-4 focus:ring-[#f59a44]/10" placeholder={t.search} aria-label="Search the catalog" />{searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-full bg-[#f8eee5] text-[#8e756c]" aria-label="Clear search"><X className="h-3.5 w-3.5" /></button>}
           </div>
 
           <button onClick={() => setLanguage(current => current === "en" ? "ne" : "en")} className="hidden items-center gap-1 rounded-xl border border-[#eaded7] bg-white px-2.5 py-2 text-[10px] font-black uppercase tracking-[0.08em] hover:border-[#f59a44] sm:flex" aria-label="Switch language"><Globe className="h-3.5 w-3.5 text-[#cf6d2d]" /><span className={language === "en" ? "text-[#4a241b]" : "text-[#8b978e]"}>EN</span><span className="text-[#b5beb7]">/</span><span className={language === "ne" ? "text-[#4a241b]" : "text-[#8b978e]"}>ने</span></button>
@@ -1020,8 +1141,23 @@ export default function Home() {
           <div className="container">
             <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#cf6d2d]">{t.shopKicker}</p><h2 className="font-display text-2xl font-extrabold tracking-[-0.04em] sm:text-3xl">{t.popular}</h2><p className="mt-2 text-sm text-[#8e756c]">Handpicked by our local team · delivery to {selectedLocation.split(",")[0]}</p></div><div className="flex items-center gap-2"><button className="grid h-9 w-9 place-items-center rounded-full border border-[#eadfd8] bg-white hover:border-[#f59a44]"><ChevronLeft className="h-4 w-4" /></button><button className="grid h-9 w-9 place-items-center rounded-full border border-[#eadfd8] bg-white hover:border-[#f59a44]"><ChevronRight className="h-4 w-4" /></button></div></div>
             <div className="hide-scrollbar mt-6 flex gap-2 overflow-x-auto pb-2"><button onClick={() => setSelectedCategory("All")} className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-extrabold ${selectedCategory === "All" ? "bg-[#4a241b] text-white" : "border border-[#eaded7] bg-white text-[#80655d]"}`}>{language === "ne" ? "सबै" : "All finds"}</button>{categories.map(category => <button key={category.label} onClick={() => setSelectedCategory(category.label)} className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-extrabold ${selectedCategory === category.label ? "bg-[#4a241b] text-white" : "border border-[#eaded7] bg-white text-[#80655d]"}`}>{category.label}</button>)}</div>
-            <div className="mt-5 rounded-2xl border border-[#eadfd8] bg-white p-4"><div className="flex flex-wrap items-center justify-between gap-3"><button onClick={() => setFiltersOpen(current => !current)} className="inline-flex items-center gap-2 rounded-xl bg-[#f8eee5] px-3 py-2 text-xs font-extrabold"><SlidersHorizontal className="h-4 w-4 text-[#cf6d2d]" />{t.filters}<span className="rounded-full bg-[#f59a44] px-1.5 py-0.5 text-[9px] text-[#4a241b]">{(minPrice > 0 ? 1 : 0) + (maxPrice < 150000 ? 1 : 0) + (selectedBrand !== "All brands" ? 1 : 0)}</span></button><div className="flex items-center gap-2 text-xs"><ArrowDownUp className="h-3.5 w-3.5 text-[#8b978e]" /><span className="font-bold text-[#8e756c]">{t.sort}</span><select value={sortBy} onChange={event => setSortBy(event.target.value)} className="rounded-xl border border-[#eaded7] bg-white px-3 py-2 text-xs font-extrabold outline-none"><option value="featured">Featured</option><option value="rating">Top rated</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select></div></div>{filtersOpen && <div className="mt-4 grid gap-5 border-t border-[#fff0e2] pt-4 md:grid-cols-[1.2fr_1fr]"><div><div className="mb-2 flex items-center justify-between text-xs font-extrabold"><span>{t.price}</span><span className="text-[#cf6d2d]">{formatNpr(minPrice)} — {formatNpr(maxPrice)}</span></div><div className="grid gap-2"><input type="range" min="0" max="150000" step="500" value={minPrice} onChange={event => setMinPrice(Math.min(Number(event.target.value), maxPrice - 500))} className="w-full accent-[#4a241b]" /><input type="range" min="500" max="150000" step="500" value={maxPrice} onChange={event => setMaxPrice(Math.max(Number(event.target.value), minPrice + 500))} className="w-full accent-[#f59a44]" /></div></div><div><div className="mb-2 text-xs font-extrabold">{t.brand}</div><div className="flex flex-wrap gap-2">{brands.map(brand => <button key={brand} onClick={() => setSelectedBrand(brand)} className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${selectedBrand === brand ? "bg-[#4a241b] text-white" : "bg-[#f8eee5] text-[#80655d]"}`}>{brand === "All brands" ? t.allBrands : brand}</button>)}</div></div></div>}</div>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{filteredProducts.map((product, index) => <article key={product.id} className="group relative overflow-hidden rounded-[20px] border border-[#eadfd8] bg-white p-2.5 card-shadow transition-all hover:-translate-y-1 hover:shadow-xl" style={{ animationDelay: `${index * 45}ms` }}><div className="relative aspect-[.92] overflow-hidden rounded-[15px]" style={{ backgroundColor: product.tone }}><img src={product.image} alt={product.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /><div className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-black text-[#4a241b] backdrop-blur-sm">{product.badge ?? "xitosam pick"}</div><button onClick={() => toggleFavorite(product)} className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/90 text-[#8e756c] backdrop-blur-sm hover:text-[#c84b3d]" aria-label="Add to wishlist"><Heart className={`h-4 w-4 ${favorites.includes(product.id) ? "fill-[#c84b3d] text-[#c84b3d]" : ""}`} /></button><button onClick={() => addToCart(product)} className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center rounded-full bg-[#f59a44] text-[#4a241b] opacity-0 shadow-md transition-opacity group-hover:opacity-100" aria-label="Add to cart"><ShoppingBag className="h-4 w-4" /></button></div><div className="px-1 pb-1 pt-3"><div className="mb-1 flex items-center gap-1 text-[10px] font-bold text-[#8e756c]"><Star className="h-3 w-3 fill-[#f59a44] text-[#f59a44]" />{product.rating} <span className="font-medium text-[#b1a097]">({product.reviews})</span></div><h3 className="line-clamp-2 min-h-[38px] text-[12px] font-extrabold leading-[1.35] text-[#4a241b] sm:text-[13px]">{product.name}</h3><div className="mt-2 flex items-baseline gap-2"><span className="text-sm font-black text-[#4a241b]">{formatNpr(product.price)}</span><span className="text-[10px] text-[#9ca79f] line-through">{formatNpr(product.compare)}</span></div><div className="mt-2 flex items-center gap-1 text-[10px] text-[#927d74]"><Truck className="h-3 w-3 text-[#cf6d2d]" /> <span className="truncate">{product.delivery}</span></div><div className="mt-2 hidden items-center gap-1 text-[10px] text-[#6f7d73] sm:flex"><BadgeCheck className="h-3 w-3 text-[#df7e3d]" /> {product.seller} · {product.city}</div></div></article>)}</div>
+            <div className="mt-5 rounded-[24px] border border-[#eadfd8] bg-white p-4 shadow-[0_10px_30px_rgba(111,62,44,.06)] sm:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#cf6d2d]"><Search className="h-3.5 w-3.5" /> Search the full catalog</div>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#cf6d2d]" />
+                    <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="h-12 w-full rounded-2xl border border-[#eadfd7] bg-[#fffaf5] pl-12 pr-11 text-sm font-bold outline-none transition focus:border-[#f59a44] focus:ring-4 focus:ring-[#f59a44]/10" placeholder="Try ‘Samsung’, ‘laptop’, or ‘under NPR 50,000’" aria-label="Search mobiles, laptops and more" />
+                    {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-[#ffe7d2] text-[#ba5e35]" aria-label="Clear catalog search"><X className="h-3.5 w-3.5" /></button>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs lg:pt-5"><span className="rounded-full bg-[#fff0e2] px-3 py-2 font-extrabold text-[#ba5e35]">{filteredProducts.length} finds</span><button onClick={() => { setSearchQuery(""); setSelectedBrand("All brands"); setMinPrice(0); setMaxPrice(150000); setSortBy("featured"); }} className="rounded-xl border border-[#eadfd7] px-3 py-2 font-extrabold text-[#80655d] hover:border-[#f59a44]">Reset</button></div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-extrabold text-[#80655d]"><span className="mr-1 self-center text-[#927d74]">Popular:</span>{["Samsung", "Apple", "Lenovo", "laptop"].map(query => <button key={query} onClick={() => setSearchQuery(query)} className="rounded-full bg-[#f8eee5] px-3 py-1.5 transition hover:-translate-y-0.5 hover:bg-[#ffe7d2]">{query}</button>)}</div>
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#fff0e2] pt-4"><button onClick={() => setFiltersOpen(current => !current)} className="inline-flex items-center gap-2 rounded-xl bg-[#f8eee5] px-3 py-2 text-xs font-extrabold"><SlidersHorizontal className="h-4 w-4 text-[#cf6d2d]" />{t.filters}<span className="rounded-full bg-[#f59a44] px-1.5 py-0.5 text-[9px] text-[#4a241b]">{(minPrice > 0 ? 1 : 0) + (maxPrice < 150000 ? 1 : 0) + (selectedBrand !== "All brands" ? 1 : 0)}</span></button><div className="flex items-center gap-2 text-xs"><ArrowDownUp className="h-3.5 w-3.5 text-[#8b978e]" /><span className="font-bold text-[#8e756c]">{t.sort}</span><select value={sortBy} onChange={event => setSortBy(event.target.value)} className="rounded-xl border border-[#eaded7] bg-white px-3 py-2 text-xs font-extrabold outline-none"><option value="featured">Featured</option><option value="rating">Top rated</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select></div></div>
+              {filtersOpen && <div className="mt-4 grid gap-5 border-t border-[#fff0e2] pt-4 md:grid-cols-[1.2fr_1fr]"><div><div className="mb-2 flex items-center justify-between text-xs font-extrabold"><span>{t.price}</span><span className="text-[#cf6d2d]">{formatNpr(minPrice)} — {formatNpr(maxPrice)}</span></div><div className="grid gap-2"><input type="range" min="0" max="150000" step="500" value={minPrice} onChange={event => setMinPrice(Math.min(Number(event.target.value), maxPrice - 500))} className="w-full accent-[#4a241b]" /><input type="range" min="500" max="150000" step="500" value={maxPrice} onChange={event => setMaxPrice(Math.max(Number(event.target.value), minPrice + 500))} className="w-full accent-[#f59a44]" /></div></div><div><div className="mb-2 text-xs font-extrabold">{t.brand}</div><div className="flex max-h-28 flex-wrap gap-2 overflow-y-auto pr-1">{brands.map(brand => <button key={brand} onClick={() => setSelectedBrand(brand)} className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${selectedBrand === brand ? "bg-[#4a241b] text-white" : "bg-[#f8eee5] text-[#80655d]"}`}>{brand === "All brands" ? t.allBrands : brand}</button>)}</div></div></div>}
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{filteredProducts.map((product, index) => <article key={product.id} onClick={() => setSelectedProduct(product)} className="group relative cursor-pointer overflow-hidden rounded-[20px] border border-[#eadfd8] bg-white p-2.5 card-shadow transition-all duration-300 hover:-translate-y-2 hover:border-[#f3c29c] hover:shadow-[0_18px_40px_rgba(111,62,44,.14)]" style={{ animationDelay: `${index * 45}ms` }}><div className="relative aspect-[.92] overflow-hidden rounded-[15px]" style={{ backgroundColor: product.tone }}><img src={product.image} alt={product.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110" /><div className="absolute inset-0 bg-gradient-to-t from-[#4a241b]/35 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" /><div className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-black text-[#4a241b] backdrop-blur-sm">{product.badge ?? "xitosam pick"}</div><button onClick={event => { event.stopPropagation(); toggleFavorite(product); }} className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-white/90 text-[#8e756c] backdrop-blur-sm transition-all duration-200 hover:scale-110 hover:text-[#c84b3d]" aria-label="Add to wishlist"><Heart className={`h-4 w-4 ${favorites.includes(product.id) ? "fill-[#c84b3d] text-[#c84b3d]" : ""}`} /></button><div className="absolute bottom-2 left-2 right-2 flex translate-y-2 items-center justify-between gap-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"><button onClick={event => { event.stopPropagation(); setSelectedProduct(product); }} className="inline-flex items-center gap-1.5 rounded-xl bg-white/95 px-3 py-2 text-[10px] font-black text-[#4a241b] shadow-md backdrop-blur-sm"><Eye className="h-3.5 w-3.5" /> Quick view</button><button onClick={event => { event.stopPropagation(); addToCart(product); setCartOpen(true); }} className="grid h-9 w-9 place-items-center rounded-xl bg-[#f59a44] text-[#4a241b] shadow-md transition-transform hover:scale-105" aria-label="Add to cart"><ShoppingBag className="h-4 w-4" /></button></div></div><div className="px-1 pb-1 pt-3"><div className="mb-1 flex items-center gap-1 text-[10px] font-bold text-[#8e756c]"><Star className="h-3 w-3 fill-[#f59a44] text-[#f59a44]" />{product.rating} <span className="font-medium text-[#b1a097]">({product.reviews})</span></div><h3 className="line-clamp-2 min-h-[38px] text-[12px] font-extrabold leading-[1.35] text-[#4a241b] sm:text-[13px]">{product.name}</h3><div className="mt-2 flex items-baseline gap-2"><span className="text-sm font-black text-[#4a241b]">{formatNpr(product.price)}</span><span className="text-[10px] text-[#9ca79f] line-through">{formatNpr(product.compare)}</span></div><div className="mt-2 flex items-center gap-1 text-[10px] text-[#927d74]"><Truck className="h-3 w-3 text-[#cf6d2d]" /> <span className="truncate">{product.delivery}</span></div><div className="mt-2 hidden items-center gap-1 text-[10px] text-[#6f7d73] sm:flex"><BadgeCheck className="h-3 w-3 text-[#df7e3d]" /> {product.seller} · {product.city}</div></div></article>)}</div>
             {!filteredProducts.length && <div className="rounded-2xl border border-dashed border-[#eaded7] bg-white p-12 text-center text-sm text-[#8e756c]">No products in this category yet. Try another edit.</div>}
           </div>
         </section>
@@ -1038,7 +1174,16 @@ export default function Home() {
 
       {locationOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-[#351c1c]/50 p-4 backdrop-blur-sm"><div className="relative w-full max-w-[480px] rounded-[28px] bg-[#fffaf4] p-6 shadow-2xl sm:p-8"><button onClick={() => setLocationOpen(false)} className="absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full bg-[#fff0e5] text-[#8a746a]" aria-label="Close location picker"><X className="h-4 w-4" /></button><div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#ffe6cf] text-[#c16f29]"><MapPin className="h-6 w-6" /></div><p className="mt-6 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#cf6d2d]">Delivery that fits your day</p><h2 className="font-display mt-2 text-3xl font-extrabold tracking-[-0.05em]">Where should we deliver?</h2><p className="mt-3 text-sm leading-6 text-[#748179]">We’ll show availability, delivery dates and nearby sellers for your area.</p><div className="mt-6 grid gap-2 sm:grid-cols-2">{(locationsQuery.data ?? [{ province: "Bagmati", cities: ["Kathmandu", "Lalitpur", "Bhaktapur"] }, { province: "Gandaki", cities: ["Pokhara", "Baglung"] }, { province: "Lumbini", cities: ["Butwal", "Bhairahawa"] }]).flatMap(location => location.cities.map(city => ({ city, province: location.province }))).slice(0, 9).map(location => <button key={`${location.city}-${location.province}`} onClick={() => { setSelectedLocation(`${location.city}, ${location.province}`); setLocationOpen(false); toast.success(`Delivering to ${location.city}`, { description: "Your feed is now personalized." }); }} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-bold transition-colors hover:border-[#f59a44] hover:bg-[#fff7ed] ${selectedLocation.startsWith(location.city) ? "border-[#f59a44] bg-[#fff7ed]" : "border-[#eadfd8] bg-white"}`}><span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[#f59a44]" />{location.city}</span><span className="text-[10px] font-semibold text-[#85928a]">{location.province}</span></button>)}</div><div className="mt-6 rounded-xl bg-[#f8eee5] p-3 text-xs leading-5 text-[#8e756c]"><strong className="text-[#4a241b]">Tip:</strong> Availability can vary by seller. We’ll always show the earliest delivery date before you pay.</div></div></div>}
 
-      {cartOpen && <div className="fixed inset-0 z-50 bg-[#351c1c]/40 backdrop-blur-sm"><div className="absolute right-0 top-0 h-full w-full max-w-[430px] overflow-y-auto bg-[#fffaf4] p-5 shadow-2xl sm:p-7"><div className="flex items-center justify-between"><div><p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#cf6d2d]">Your bag · {cartCount} item{cartCount === 1 ? "" : "s"}</p><h2 className="font-display mt-1 text-3xl font-extrabold tracking-[-0.05em]">Ready to go?</h2></div><button onClick={() => setCartOpen(false)} className="grid h-10 w-10 place-items-center rounded-full bg-[#fff0e5]" aria-label="Close cart"><X className="h-4 w-4" /></button></div>{cartItems.length ? <><div className="mt-7 space-y-3">{cartItems.map(product => <div key={product.id} className="flex gap-3 rounded-2xl border border-[#eadfd8] bg-white p-3"><img src={product.image} alt={product.name} className="h-20 w-20 rounded-xl object-cover" /><div className="min-w-0 flex-1"><h3 className="line-clamp-2 text-xs font-extrabold leading-5">{product.name}</h3><div className="mt-1 text-sm font-black">{formatNpr(product.price)}</div><div className="mt-2 flex items-center gap-2"><button onClick={() => setCart(current => ({ ...current, [product.id]: Math.max(0, (current[product.id] ?? 1) - 1) }))} className="grid h-6 w-6 place-items-center rounded-md bg-[#fff0e5] text-sm font-bold">−</button><span className="w-4 text-center text-xs font-bold">{cart[product.id]}</span><button onClick={() => addToCart(product)} className="grid h-6 w-6 place-items-center rounded-md bg-[#fff0e5] text-sm font-bold">+</button></div></div></div>)}</div><div className="mt-7 rounded-2xl bg-[#f8eee5] p-4 text-sm"><div className="flex justify-between text-[#8e756c]"><span>Subtotal</span><span>{formatNpr(cartTotal)}</span></div><div className="mt-2 flex justify-between text-[#8e756c]"><span>Delivery</span><span className="font-bold text-[#4d9469]">Calculated at checkout</span></div><div className="mt-4 flex justify-between border-t border-[#eaded7] pt-4 text-base font-black"><span>Estimated total</span><span>{formatNpr(cartTotal)}</span></div></div><Button onClick={() => { setCartOpen(false); if (!loggedIn) setLoginOpen(true); else toast.success("Checkout flow ready", { description: "Connect your payment and COD provider next." }); }} className="mt-5 h-12 w-full rounded-xl bg-[#4a241b] font-extrabold text-white hover:bg-[#1a4a37]">Continue to checkout <ArrowRight className="ml-2 h-4 w-4" /></Button><p className="mt-3 text-center text-[10px] text-[#8b978e]">Cash on delivery available in eligible locations</p></> : <div className="mt-20 text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-[#f2eee3]"><ShoppingBag className="h-8 w-8 text-[#cf6d2d]" /></div><h3 className="font-display mt-5 text-xl font-extrabold">Your bag is waiting</h3><p className="mt-2 text-sm text-[#77847b]">Add a few good things and they’ll show up here.</p><button onClick={() => { setCartOpen(false); document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" }); }} className="mt-6 rounded-xl bg-[#f59a44] px-5 py-3 text-xs font-extrabold text-[#4a241b]">Explore products</button></div>}</div></div>}
+      <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${cartOpen ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setCartOpen(false)} aria-hidden={!cartOpen}>
+        <div className="absolute inset-0 bg-[#351c1c]/40 backdrop-blur-sm" />
+        <div onClick={event => event.stopPropagation()} className={`absolute right-0 top-0 h-full w-full max-w-[430px] overflow-y-auto bg-[#fffaf4] p-5 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] sm:p-7 ${cartOpen ? "translate-x-0" : "translate-x-full"}`}>
+          <div className="flex items-center justify-between"><div><p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#cf6d2d]">Your bag · {cartCount} item{cartCount === 1 ? "" : "s"}</p><h2 className="font-display mt-1 text-3xl font-extrabold tracking-[-0.05em]">Ready to go?</h2></div><button onClick={() => setCartOpen(false)} className="grid h-10 w-10 place-items-center rounded-full bg-[#fff0e5] transition-transform hover:rotate-90" aria-label="Close cart"><X className="h-4 w-4" /></button></div>
+          {cartItems.length ? <><div className="mt-7 space-y-3">{cartItems.map(product => <div key={product.id} className="flex gap-3 rounded-2xl border border-[#eadfd8] bg-white p-3"><img src={product.image} alt={product.name} className="h-20 w-20 rounded-xl object-cover" /><div className="min-w-0 flex-1"><h3 className="line-clamp-2 text-xs font-extrabold leading-5">{product.name}</h3><div className="mt-1 text-sm font-black">{formatNpr(product.price)}</div><div className="mt-2 flex items-center gap-2"><button onClick={() => updateCartQuantity(product, (cart[product.id] ?? 1) - 1)} className="grid h-7 w-7 place-items-center rounded-lg bg-[#fff0e5] text-sm font-bold transition-transform hover:scale-105">−</button><span className="w-4 text-center text-xs font-bold">{cart[product.id]}</span><button onClick={() => addToCart(product)} className="grid h-7 w-7 place-items-center rounded-lg bg-[#fff0e5] text-sm font-bold transition-transform hover:scale-105">+</button><button onClick={() => updateCartQuantity(product, 0)} className="ml-auto text-[10px] font-extrabold text-[#b5574b] hover:underline">Remove</button></div></div></div>)}</div><div className="mt-7 rounded-2xl bg-[#f8eee5] p-4 text-sm"><div className="flex justify-between text-[#8e756c]"><span>Subtotal</span><span>{formatNpr(cartTotal)}</span></div><div className="mt-2 flex justify-between text-[#8e756c]"><span>Delivery</span><span className="font-bold text-[#ba5e35]">Calculated at checkout</span></div><div className="mt-4 flex justify-between border-t border-[#eaded7] pt-4 text-base font-black"><span>Estimated total</span><span>{formatNpr(cartTotal)}</span></div></div><Button onClick={openCheckout} className="mt-5 h-12 w-full rounded-xl bg-[#4a241b] font-extrabold text-white hover:bg-[#6d3529]">Continue to checkout <ArrowRight className="ml-2 h-4 w-4" /></Button><p className="mt-3 text-center text-[10px] text-[#8b978e]">Cash on delivery available in eligible locations</p></> : <div className="mt-20 text-center"><div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-[#f2eee3]"><ShoppingBag className="h-8 w-8 text-[#cf6d2d]" /></div><h3 className="font-display mt-5 text-xl font-extrabold">Your bag is waiting</h3><p className="mt-2 text-sm text-[#77847b]">Add a few good things and they’ll show up here.</p><button onClick={() => { setCartOpen(false); document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" }); }} className="mt-6 rounded-xl bg-[#f59a44] px-5 py-3 text-xs font-extrabold text-[#4a241b]">Explore products</button></div>}
+        </div>
+      </div>
+
+      {selectedProduct && <div className="fixed inset-0 z-[55] grid place-items-center bg-[#351c1c]/55 p-4 backdrop-blur-sm" onClick={() => setSelectedProduct(null)}><div onClick={event => event.stopPropagation()} className="relative max-h-[92vh] w-full max-w-[900px] overflow-y-auto rounded-[30px] bg-[#fffaf4] p-4 shadow-2xl sm:p-7"><button onClick={() => setSelectedProduct(null)} className="absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[#8a746a] shadow-sm transition-transform hover:rotate-90" aria-label="Close product quick view"><X className="h-4 w-4" /></button><div className="grid gap-7 lg:grid-cols-[1.02fr_1fr] lg:items-start"><div><div className="grid grid-cols-3 gap-2">{getProductDetails(selectedProduct).gallery.map((image, index) => <button key={image} onClick={() => setSelectedProduct(current => current ? { ...current, image } : current)} className={`overflow-hidden rounded-2xl border-2 ${index === 0 ? "border-[#f59a44]" : "border-transparent"}`}><img src={image} alt={`${selectedProduct.name} view ${index + 1}`} className="aspect-square w-full object-cover" /></button>)}</div><div className="mt-3 overflow-hidden rounded-[24px]" style={{ backgroundColor: selectedProduct.tone }}><img src={selectedProduct.image} alt={selectedProduct.name} className="aspect-square max-h-[460px] w-full object-cover" /></div></div><div className="pt-2 sm:pt-5"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#ffe7d2] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-[#ba5e35]">{selectedProduct.badge ?? "xitosam pick"}</span><span className="flex items-center gap-1 text-xs font-bold text-[#8e756c]"><Star className="h-3.5 w-3.5 fill-[#f59a44] text-[#f59a44]" /> {selectedProduct.rating} · {selectedProduct.reviews} reviews</span></div><h2 className="font-display mt-4 pr-10 text-3xl font-extrabold leading-tight tracking-[-0.05em] text-[#4a241b] sm:text-4xl">{selectedProduct.name}</h2><p className="mt-3 text-sm leading-6 text-[#8e756c]">{getProductDetails(selectedProduct).description}</p><div className="mt-5 flex items-baseline gap-3"><span className="text-2xl font-black text-[#4a241b]">{formatNpr(selectedProduct.price)}</span><span className="text-sm text-[#b1a097] line-through">{formatNpr(selectedProduct.compare)}</span></div><div className="mt-6 grid gap-2 rounded-2xl bg-[#fff0e2] p-4 sm:grid-cols-2">{getProductDetails(selectedProduct).specifications.map(spec => <div key={spec.label}><div className="text-[10px] font-black uppercase tracking-[0.1em] text-[#ba5e35]">{spec.label}</div><div className="mt-1 text-xs font-bold text-[#60443a]">{spec.value}</div></div>)}</div><div className="mt-6 flex flex-wrap gap-3"><Button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); setCartOpen(true); }} className="h-12 flex-1 rounded-xl bg-[#f59a44] px-5 font-extrabold text-[#4a241b] shadow-[0_5px_0_#d77a2f] hover:bg-[#ffad59]">Buy now <ArrowRight className="ml-2 h-4 w-4" /></Button><button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }} className="h-12 rounded-xl border border-[#eadfd7] bg-white px-5 text-xs font-extrabold text-[#4a241b] hover:border-[#f59a44]">Add to bag</button></div><div className="mt-4 flex items-center gap-2 text-xs font-bold text-[#8e756c]"><Truck className="h-4 w-4 text-[#cf6d2d]" /> {selectedProduct.delivery}<span className="mx-1 text-[#d7bbae]">·</span><BadgeCheck className="h-4 w-4 text-[#df7e3d]" /> Seller verified</div></div></div></div></div>}
+      {checkoutOpen && <div className="fixed inset-0 z-[60] grid place-items-center bg-[#351c1c]/60 p-4 backdrop-blur-sm" onClick={() => checkoutStep !== "processing" && setCheckoutOpen(false)}><div onClick={event => event.stopPropagation()} className="relative max-h-[92vh] w-full max-w-[560px] overflow-y-auto rounded-[30px] bg-[#fffaf4] p-5 shadow-2xl sm:p-8"><button onClick={() => checkoutStep !== "processing" && setCheckoutOpen(false)} className="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full bg-[#fff0e5] text-[#8a746a] transition-transform hover:rotate-90 disabled:opacity-40" aria-label="Close checkout" disabled={checkoutStep === "processing"}><X className="h-4 w-4" /></button>{checkoutStep === "success" ? <div className="py-8 text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#ffe7d2] text-[#ba5e35]"><BadgeCheck className="h-8 w-8" /></div><p className="mt-6 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#cf6d2d]">Demo payment approved</p><h2 className="font-display mt-2 text-3xl font-extrabold tracking-[-0.05em]">Your order is on its way.</h2><p className="mx-auto mt-3 max-w-[380px] text-sm leading-6 text-[#8e756c]">This simulated checkout shows the handoff to a Nepal payment gateway. No real money was moved.</p><div className="mx-auto mt-6 max-w-[360px] rounded-2xl bg-[#fff0e2] p-4 text-left text-xs"><div className="flex justify-between"><span className="text-[#8e756c]">Payment reference</span><strong className="text-[#4a241b]">XIT-DEMO-{new Date().getFullYear()}</strong></div><div className="mt-2 flex justify-between"><span className="text-[#8e756c]">Paid with</span><strong className="capitalize text-[#4a241b]">{paymentMethod === "cod" ? "Cash on delivery" : paymentMethod}</strong></div><div className="mt-2 flex justify-between border-t border-[#eadfd7] pt-2"><span className="text-[#8e756c]">Total</span><strong className="text-[#4a241b]">{formatNpr(cartTotal)}</strong></div></div><Button onClick={() => { setCheckoutOpen(false); setCart({}); }} className="mt-7 h-12 w-full max-w-[360px] rounded-xl bg-[#4a241b] font-extrabold text-white hover:bg-[#6d3529]">Done <ArrowRight className="ml-2 h-4 w-4" /></Button></div> : checkoutStep === "processing" ? <div className="grid min-h-[360px] place-items-center py-10 text-center"><div><div className="mx-auto grid h-16 w-16 animate-pulse place-items-center rounded-full bg-[#ffe7d2] text-[#ba5e35]"><ShieldCheck className="h-8 w-8" /></div><h2 className="font-display mt-6 text-2xl font-extrabold">Connecting securely…</h2><p className="mt-2 text-sm text-[#8e756c]">Simulating {paymentMethod === "cod" ? "cash-on-delivery confirmation" : `${paymentMethod} gateway`} response.</p></div></div> : <><p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#cf6d2d]">Secure checkout · demo mode</p><h2 className="font-display mt-2 pr-12 text-3xl font-extrabold tracking-[-0.05em]">Choose how to pay.</h2><p className="mt-3 text-sm leading-6 text-[#8e756c]">Select a payment method to preview the complete checkout handoff. This is a simulation only.</p><div className="mt-6 rounded-2xl bg-[#fff0e2] p-4"><div className="flex items-center justify-between text-xs"><span className="font-extrabold text-[#4a241b]">Order summary</span><span className="font-black text-[#4a241b]">{cartCount} item{cartCount === 1 ? "" : "s"}</span></div><div className="mt-3 space-y-2">{cartItems.slice(0, 3).map(product => <div key={product.id} className="flex justify-between gap-3 text-xs"><span className="truncate text-[#8e756c]">{product.name} × {cart[product.id]}</span><span className="shrink-0 font-bold text-[#4a241b]">{formatNpr(product.price * (cart[product.id] ?? 0))}</span></div>)}</div><div className="mt-3 flex justify-between border-t border-[#eadfd7] pt-3 text-sm font-black"><span>Total</span><span>{formatNpr(cartTotal)}</span></div></div><div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">{(["esewa", "khalti", "card", "cod"] as const).map(method => <button key={method} onClick={() => setPaymentMethod(method)} className={`rounded-2xl border px-3 py-3 text-left transition-all hover:-translate-y-0.5 ${paymentMethod === method ? "border-[#f59a44] bg-[#ffe7d2] shadow-[0_0_0_3px_rgba(245,154,68,.16)]" : "border-[#eadfd7] bg-white"}`}><div className="text-xs font-black capitalize text-[#4a241b]">{method === "cod" ? "Cash on delivery" : method}</div><div className="mt-1 text-[10px] text-[#8e756c]">{method === "cod" ? "Pay at door" : "Demo gateway"}</div></button>)}</div><div className="mt-6 flex items-center gap-2 rounded-xl border border-[#eadfd7] bg-white px-3 py-3 text-xs text-[#8e756c]"><ShieldCheck className="h-4 w-4 shrink-0 text-[#df7e3d]" /> Protected by xitosam buyer promise</div><Button onClick={simulatePayment} className="mt-6 h-12 w-full rounded-xl bg-[#f59a44] font-extrabold text-[#4a241b] shadow-[0_5px_0_#d77a2f] hover:bg-[#ffad59]">{paymentMethod === "cod" ? "Confirm cash on delivery" : `Pay with ${paymentMethod}`} <ArrowRight className="ml-2 h-4 w-4" /></Button></>}</div></div>}
 
       {trackOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-[#351c1c]/50 p-4 backdrop-blur-sm"><div className="relative w-full max-w-[510px] rounded-[28px] bg-[#fffaf4] p-6 shadow-2xl sm:p-8"><button onClick={() => setTrackOpen(false)} className="absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full bg-[#fff0e5] text-[#8a746a]" aria-label="Close tracking"><X className="h-4 w-4" /></button><div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#ffe7d2] text-[#ba5e35]"><Truck className="h-6 w-6" /></div><p className="mt-6 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#cf6d2d]">Order tracking</p><h2 className="font-display mt-2 text-3xl font-extrabold tracking-[-0.05em]">Know where it is.</h2><p className="mt-3 text-sm leading-6 text-[#748179]">A clean view of your order journey, from a seller’s shelf to your doorstep.</p><div className="mt-7 rounded-2xl border border-[#eadfd8] bg-white p-4"><div className="flex items-center justify-between"><div><div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#8b978e]">Latest order</div><div className="mt-1 text-sm font-black">{cartItems[0]?.name ?? "Your next xitosam order"}</div></div><span className="rounded-full bg-[#ffe7d2] px-2.5 py-1 text-[10px] font-black text-[#b96039]">On the way</span></div><div className="relative mt-8"><div className="absolute left-4 right-4 top-4 h-1 rounded-full bg-[#d7e8dc]" /><div className="absolute left-4 top-4 h-1 w-[66%] rounded-full bg-[#df7e3d]" /><div className="relative flex justify-between"><div className="grid justify-items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#df7e3d] text-white"><PackageCheck className="h-4 w-4" /></span><span className="text-[10px] font-bold">Confirmed</span></div><div className="grid justify-items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-full bg-[#df7e3d] text-white"><Truck className="h-4 w-4" /></span><span className="text-[10px] font-bold">On the way</span></div><div className="grid justify-items-center gap-2"><span className="grid h-9 w-9 place-items-center rounded-full border-2 border-[#d7e8dc] bg-white text-[#a7b6ab]"><MapPin className="h-4 w-4" /></span><span className="text-[10px] font-bold text-[#8b978e]">Delivered</span></div></div></div><div className="mt-7 flex items-center gap-2 rounded-xl bg-[#f8eee5] p-3 text-xs text-[#8e756c]"><Clock3 className="h-4 w-4 text-[#cf6d2d]" /> Estimated arrival: <strong className="text-[#4a241b]">Tomorrow, 11 AM – 2 PM</strong></div></div><button onClick={() => toast.info("Tracking search is ready for your order ID.")} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#eaded7] text-xs font-extrabold hover:border-[#f59a44]"><Search className="h-4 w-4" /> Track with order ID</button><p className="mt-4 flex items-center justify-center gap-1 text-[10px] text-[#8b978e]"><Phone className="h-3 w-3" /> SMS updates are available after sign in</p></div></div>}
     </div>
