@@ -4,24 +4,24 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f7f6f1;
-  --foreground: #173b2d;
+  --background: #fff8f0;
+  --foreground: #4a241b;
   --card: #ffffff;
-  --card-foreground: #173b2d;
+  --card-foreground: #4a241b;
   --popover: #ffffff;
-  --popover-foreground: #173b2d;
-  --primary: #12372a;
-  --primary-foreground: #fffdf7;
+  --popover-foreground: #4a241b;
+  --primary: #4a241b;
+  --primary-foreground: #fffaf4;
   --secondary: #f2eee3;
-  --secondary-foreground: #173b2d;
-  --muted: #e9ece6;
+  --secondary-foreground: #4a241b;
+  --muted: #f3e4dc;
   --muted-foreground: #6b776e;
-  --accent: #f29a3d;
-  --accent-foreground: #2d1c0b;
+  --accent: #f59a44;
+  --accent-foreground: #4a241b;
   --destructive: #c84b3d;
-  --border: #e1e5de;
-  --input: #e1e5de;
-  --ring: #f29a3d;
+  --border: #eadfd8;
+  --input: #eadfd8;
+  --ring: #f59a44;
   --radius: 0.75rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
@@ -47,8 +47,8 @@ button:active { transform: scale(.97); }
 @media (min-width: 1280px) { .container { max-width: 1240px; } }
 
 .hero-grid {
-  background-color: #12372a;
-  background-image: radial-gradient(circle at 83% 28%, rgba(242,154,61,.26), transparent 22%), radial-gradient(circle at 13% 105%, rgba(79,144,113,.45), transparent 30%), linear-gradient(130deg, #12372a 0%, #173e30 58%, #102e25 100%);
+  background-color: #4a241b;
+  background-image: radial-gradient(circle at 83% 28%, rgba(245,154,68,.34), transparent 22%), radial-gradient(circle at 13% 105%, rgba(219,120,80,.38), transparent 30%), linear-gradient(130deg, #4a241b 0%, #6a3429 58%, #381b19 100%);
 }
 .dotted-grid {
   background-image: radial-gradient(rgba(255,255,255,.18) 1px, transparent 1px);
@@ -66,21 +66,21 @@ button:active { transform: scale(.97); }
 }
 
 .dark {
-  --background: #10271e;
-  --foreground: #f7f6f1;
-  --card: #18362a;
-  --card-foreground: #f7f6f1;
-  --popover: #18362a;
-  --popover-foreground: #f7f6f1;
+  --background: #351c1c;
+  --foreground: #fff8f0;
+  --card: #4b2925;
+  --card-foreground: #fff8f0;
+  --popover: #4b2925;
+  --popover-foreground: #fff8f0;
   --primary: #f2a14b;
   --primary-foreground: #231507;
-  --secondary: #1f4636;
-  --secondary-foreground: #f7f6f1;
-  --muted: #1c4031;
-  --muted-foreground: #b8c4bb;
+  --secondary: #71392e;
+  --secondary-foreground: #fff8f0;
+  --muted: #5a2d25;
+  --muted-foreground: #d5b6aa;
   --accent: #f2a14b;
   --accent-foreground: #231507;
-  --border: #2d5141;
-  --input: #2d5141;
+  --border: #8d5a4d;
+  --input: #8d5a4d;
   --ring: #f2a14b;
 }
