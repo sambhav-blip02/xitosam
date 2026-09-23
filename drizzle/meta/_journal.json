@@ -1,5 +1,20 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1790176759562,
+      "tag": "0000_material_doctor_doom",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1790176881877,
+      "tag": "0001_lying_rawhide_kid",
+      "breakpoints": true
+    }
+  ]
 }
